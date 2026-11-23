@@ -43,3 +43,8 @@ th { position: sticky; top: 0; background: var(--surface-2); z-index: 1; }
   .kpis div { padding: 7px 3px; }
   .editors { grid-template-columns: 1fr; }
 }
+.verify { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 13px 10px; }
+.verify label { color: var(--ink-muted); }
+.verify-result { font: 11px var(--font-num); overflow-wrap: anywhere; }
+.archive .hint { margin: 0 13px 10px; color: var(--ink-muted); }
+.archive dl.audit-pack dd .button { padding: 2px 8px; font-size: 12px; }

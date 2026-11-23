@@ -17,7 +17,7 @@
   <div class="work">
     <header>
       <h2>{{ names[stage] }}</h2><span class="stamp">{{ rule }} · {{ generated }}</span>
-      {% if certificate %}<a class="button" href="/api/export/{{ certificate.snapshot.run_id }}">下载证据包</a>{% endif %}
+      {% if certificate %}<a class="button" href="/api/audit/{{ certificate.snapshot.run_id }}" download>下载外审包</a>{% endif %}
     </header>
     <main>
       <form class="toolbar" method="post">

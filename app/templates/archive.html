@@ -4,6 +4,23 @@
   {% if certificate %}
   <dl><dt>结算资格</dt><dd>{{ '可结算' if certificate.can_settle else '待核' }}</dd><dt>摘要 SHA-256</dt><dd>{{ certificate.integrity_sha256 }}</dd><dt>分段证据</dt><dd>{{ certificate.evidence_counts.intervals }} 条</dd><dt>隔离证据</dt><dd>{{ certificate.evidence_counts.isolated }} 条</dd></dl>
   {% endif %}
+  {% if audit %}
+  {% set run_id = certificate.snapshot.run_id %}
+  <dl class="audit-pack">
+    <dt>外审包</dt><dd><a class="button" href="/api/audit/{{ run_id }}" download>下载 JSON</a> · <a href="/api/evidence/{{ run_id }}/audit">预览</a></dd>
+    <dt>外审摘要 SHA-256</dt><dd>{{ audit.audit_sha256 }}</dd>
+    <dt>内容摘要 SHA-256</dt><dd>{{ audit.integrity_sha256 }}</dd>
+    <dt>留档摘要 SHA-256</dt><dd>{{ audit.archive_sha256 }}</dd>
+    <dt>签发结论</dt><dd>{{ '可结算' if audit.can_settle else '待核' }} · 分段 {{ audit.evidence_counts.intervals }} 条 · 隔离 {{ audit.evidence_counts.isolated }} 条</dd>
+    <dt>隐去范围</dt><dd>{{ audit.redaction.sources.terms|join('、') }}（合同费率）· {{ audit.redaction.sources.invoice|join('、') }}（账单金额）；原行号保留</dd>
+  </dl>
+  <form class="verify" method="post" action="/api/audit/verify" enctype="multipart/form-data">
+    <label for="audit-file">验真</label><input id="audit-file" type="file" name="file" accept="application/json,.json">
+    <button type="submit">核对下载件</button>
+    <output class="verify-result" aria-live="polite"></output>
+  </form>
+  <p class="hint">外审包不含合同费率与计费金额，行号与原行次序照原件保留；重试下载内容与验真结果一致。内部原文仍存于留档库。</p>
+  {% endif %}
   <div class="scroll"><table><thead><tr><th>运行</th><th>规则</th><th>生成时间</th><th>耗时 (ms)</th></tr></thead><tbody>
   {% for run in records %}<tr><td><a href="/evidence?run={{ run.run_id }}">{{ run.run_id[:14] }}</a></td><td>{{ run.rule }}</td><td>{{ run.created_at }}</td><td class="number">{{ run.duration_ms }}</td></tr>{% else %}<tr><td colspan="4"><a href="/runs">先留档一次航次。</a></td></tr>{% endfor %}
   </tbody></table></div>

@@ -13,7 +13,7 @@
 | M4 免计边界复算 | 复核分段占额 | POST /api/clock | `app/modules/clock/service.py` | `tests/test_clock.py` |
 | M5 滞期费与账单对照 | 核对到账分钟和金额 | POST /api/ledger | `app/modules/ledger/service.py` | `tests/test_ledger.py` |
 | M6 批次留档复跑 | 固化计算并重跑 | POST /api/runs | `app/modules/runs/storage.py` | `tests/test_runs.py` |
-| M7 证据包签发 | 查验资格、下载证据 | GET /api/evidence/<run_id> | `app/modules/evidence/service.py` | `tests/test_evidence.py` |
+| M7 证据包签发 | 查验资格、下载外审包 | GET /api/evidence/<run_id> · GET /api/audit/<run_id> · POST /api/audit/verify | `app/modules/evidence/service.py` `app/modules/evidence/redaction.py` | `tests/test_evidence.py` |
 
 ## 陷阱登记
 
@@ -28,6 +28,7 @@
 | TRAP-19 | S01/S02 重叠 | 双免或随行序 | 明确优先级并列依据 | `app/modules/exceptions/precedence.py` | `tests/test_exceptions.py::test_precedence_permutation` |
 | TRAP-23 | S04/S05 贴窗 | 交界重算 | 半开并裁边 | `app/modules/exceptions/service.py` | `tests/test_exceptions.py::test_touching_window_is_outside` |
 | TRAP-25 | R1/R2 同时有效 | 随顺序定档 | 以最高优先级裁决 | `app/modules/notice/versions.py` | `tests/test_notice.py::test_notice_picks_active_priority` |
+| TRAP-27 | 隔离原文夹带费率 | 整行省略或照发原值 | 按列掩码、保留行号 | `app/modules/evidence/redaction.py` | `tests/test_evidence.py::test_audit_pack_withholds_rates_and_amounts` |
 
 ## 对账规则
 
@@ -36,3 +37,5 @@
 - 应计 20×3 + 20×5 = 160.00 USD，船方 60+95=155.00 USD，相差 5.00 USD。
 
 按航次整窗计算，输入须提供确定偏移，未实现 IANA 时区名称、装卸多舱并行额度、非美元计价或电子签章。
+
+外审包由留档快照按需派生，不另存副本：合同费率（`rate1_usd_min`/`rate2_usd_min`）与账单金额（`usd` 及由其派生的应计、实见、差额）统一替换为 `[已隐去]`，行号与列位保持不变，隔离缘由可逐行核对。签发结论（结算资格、分段/隔离条数）取自内部核算。列位置优先按留档行键序还原，旧版或重排键序的快照改用取值反推；无法确定列位或列数错位时整行掩码，宁可多掩不漏。同一运行重复签发内容字节一致。

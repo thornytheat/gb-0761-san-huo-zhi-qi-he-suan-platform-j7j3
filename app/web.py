@@ -5,7 +5,7 @@ from flask import Blueprint, abort, current_app, render_template, request
 from .config import FILES, RULE
 from .errors import Rejected
 from .input import sample
-from .modules.evidence.service import certify
+from .modules.evidence.service import certify, issue_audit
 from .modules.runs.service import archive
 from .modules.runs.storage import list_runs, lookup
 from .pipeline import evaluate
@@ -20,7 +20,8 @@ def view(stage="ledger"):
     if stage not in NAMES:
         abort(404)
     mode = request.values.get("sample", "dirty")
-    saved, certificate, error, results = None, None, None, {}
+    saved, certificate, audit, error, results = None, None, None, None, {}
+    inserted = None
     records, sources = [], {}
     database = current_app.config["DATABASE"]
     try:
@@ -29,12 +30,16 @@ def view(stage="ledger"):
         if stage == "runs":
             if request.method == "POST":
                 saved, inserted = archive(database, sources)
+                certificate = certify(saved)
+                audit = issue_audit(saved)
             records = list_runs(database)
         elif stage == "evidence":
             records = list_runs(database)
             run_id = request.args.get("run") or (records[0]["run_id"] if records else None)
             if run_id:
-                certificate = certify(lookup(database, run_id))
+                archived = lookup(database, run_id)
+                certificate = certify(archived)
+                audit = issue_audit(archived)
         else:
             results = evaluate(sources, stage)
     except Rejected as exc:
@@ -47,4 +52,4 @@ def view(stage="ledger"):
                            generated=datetime.now(timezone.utc).strftime("%m-%d %H:%M UTC"),
                            rule=RULE, error=error, clock=clock, ledger=ledger, intake=intake, table=table,
                            results=results, records=records, saved=saved, certificate=certificate,
-                           inserted=inserted if saved else None)
+                           audit=audit, inserted=inserted if saved else None)
